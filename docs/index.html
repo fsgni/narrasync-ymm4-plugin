@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NarraSync2 YMM4 プラグイン — 使い方</title>
+<meta name="description" content="ゆっくりMovieMaker4 に AI 素材生成を組み込むツールプラグインの導入手順と使い方。">
+<style>
+  :root {
+    --bg: #faf9f5; --panel: #ffffff; --panel-2: #f5f4ed; --line: #e8e6dc;
+    --text: #1f1e1c; --text-2: #55534d; --text-3: #8a8880;
+    --accent: #c96442; --accent-soft: rgba(201,100,66,.08);
+    --warn-bg: #fdf6e7; --warn-line: #e8d9ae; --warn-text: #6b5320;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110; --panel: #1a1a18; --panel-2: #1f1f1d; --line: #2e2e2b;
+      --text: #f5f4ed; --text-2: #b9b7ad; --text-3: #7a7972;
+      --accent: #d97757; --accent-soft: rgba(217,119,87,.12);
+      --warn-bg: #251f12; --warn-line: #4a3d1e; --warn-text: #e0c98a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+    line-height: 1.75; font-size: 16px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px 96px; }
+  header {
+    border-bottom: 1px solid var(--line); margin-bottom: 40px;
+    padding: 56px 0 32px; text-align: center;
+  }
+  header h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -.02em; }
+  header .sub { color: var(--text-2); margin: 0 0 24px; font-size: 15px; }
+  .dl {
+    display: inline-block; background: var(--accent); color: #fff; text-decoration: none;
+    padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 15px;
+    transition: opacity .15s;
+  }
+  .dl:hover { opacity: .88; }
+  .dl-note { color: var(--text-3); font-size: 13px; margin-top: 10px; }
+  h2 {
+    font-size: 21px; margin: 52px 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--line); letter-spacing: -.01em;
+  }
+  h3 { font-size: 16px; margin: 30px 0 10px; }
+  h4 { font-size: 15px; margin: 22px 0 6px; color: var(--accent); }
+  p, li { color: var(--text-2); }
+  p { margin: 10px 0; }
+  ul, ol { padding-left: 24px; }
+  li { margin: 6px 0; }
+  strong { color: var(--text); font-weight: 700; }
+  code {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px;
+    padding: 1px 6px; font-size: 13.5px; color: var(--text);
+    font-family: "Consolas", "SF Mono", monospace; white-space: nowrap;
+  }
+  pre {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.6;
+  }
+  pre code { background: none; border: none; padding: 0; white-space: pre; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; margin: 16px 0;
+  }
+  .note {
+    background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 8px;
+    padding: 12px 16px; margin: 16px 0; color: var(--warn-text); font-size: 14.5px;
+  }
+  .note strong { color: var(--warn-text); }
+  .note p { color: inherit; margin: 6px 0; }
+  .note p:first-child { margin-top: 0; }
+  .note p:last-child { margin-bottom: 0; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps > li {
+    counter-increment: s; position: relative; padding-left: 42px; margin: 22px 0;
+  }
+  .steps > li::before {
+    content: counter(s); position: absolute; left: 0; top: 1px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 700; font-size: 13px;
+  }
+  .steps > li > strong { display: block; color: var(--text); margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { color: var(--text-3); font-weight: 600; font-size: 13px; white-space: nowrap; }
+  td { color: var(--text-2); }
+  td:first-child { white-space: nowrap; color: var(--text); font-weight: 600; }
+  .tbl-scroll { overflow-x: auto; }
+  details {
+    border: 1px solid var(--line); border-radius: 8px; padding: 0 16px; margin: 10px 0;
+    background: var(--panel);
+  }
+  details[open] { padding-bottom: 10px; }
+  summary {
+    cursor: pointer; padding: 13px 0; font-weight: 600; color: var(--text); font-size: 15px;
+  }
+  summary::marker { color: var(--accent); }
+  footer {
+    margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line);
+    color: var(--text-3); font-size: 13px; text-align: center;
+  }
+  .toc { background: var(--panel-2); border-radius: 10px; padding: 16px 20px; margin: 28px 0; }
+  .toc ul { margin: 0; padding-left: 20px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  kbd {
+    background: var(--panel-2); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 4px; padding: 1px 6px; font-size: 12.5px; font-family: inherit;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>NarraSync2 YMM4 プラグイン</h1>
+  <p class="sub">ゆっくりMovieMaker4 に AI 素材生成を組み込むツールプラグイン</p>
+  <a class="dl" href="https://github.com/fsgni/narrasync-ymm4-plugin/releases/latest">最新版をダウンロード</a>
+  <p class="dl-note">zip を展開して <code>user\plugin\</code> に置くだけ</p>
+</header>
+
+<p>
+台本（YMM4 のセリフ）を読み取って、各行に合った<strong>挿絵を AI が生成</strong>し、タイムラインに自動で並べます。
+立ち絵の<strong>表情</strong>や<strong>補足テロップ</strong>の自動配置もできます。
+</p>
+<p>
+音声合成・字幕・口パク・エンコードなど <strong>YMM4 が既に持っている機能はそのまま</strong>。
+AI が必要な部分だけを足す作りなので、いつもの編集の流れを変えずに使えます。
+</p>
+
+<div class="toc">
+  <ul>
+    <li><a href="#install">導入</a></li>
+    <li><a href="#first">最初の設定</a></li>
+    <li><a href="#basic">基本の流れ（素材生成）</a></li>
+    <li><a href="#selected">部分的なやり直し</a></li>
+    <li><a href="#effect">画像エフェクト</a></li>
+    <li><a href="#face">立ち絵の表情を自動設定</a></li>
+    <li><a href="#telop">補足テロップの自動配置</a></li>
+    <li><a href="#faq">困ったとき</a></li>
+  </ul>
+</div>
+
+<h2 id="install">導入</h2>
+
+<ol class="steps">
+  <li>
+    <strong>ダウンロード</strong>
+    上の「最新版をダウンロード」から zip を取得します。
+  </li>
+  <li>
+    <strong>YMM4 を終了する</strong>
+    起動したままだとファイルが使用中で置き換えられません。
+  </li>
+  <li>
+    <strong>zip を展開して配置</strong>
+    中に入っている <code>NarraSync2</code> フォルダを、<strong>フォルダごと</strong>
+    <code>YukkuriMovieMaker_v4\user\plugin\</code> に置きます。
+<pre><code>YukkuriMovieMaker_v4\
+  user\
+    plugin\
+      NarraSync2\
+        NarraSync2.Ymm4Plugin.dll
+        NarraSync2.Ymm4Plugin.deps.json</code></pre>
+    すでに古い版がある場合は、この 2 つのファイルを上書きしてください。
+  </li>
+  <li>
+    <strong>YMM4 の自動更新を切る</strong>
+    このプラグインは YMM4 4.53 の内部構造を直接利用しています。
+    YMM4 が更新されると動かなくなる可能性があるため、自動更新はオフにしておいてください。
+  </li>
+  <li>
+    <strong>YMM4 を起動</strong>
+    メニューの「ツール」から <strong>NarraSync2 取り込み</strong> を開きます。
+  </li>
+</ol>
+
+<div class="note">
+  <p><strong>動作確認環境</strong>：ゆっくりMovieMaker4 v4.53 / Windows</p>
+  <p>他のバージョンでは動かない場合があります（内部構造が変わるため）。</p>
+</div>
+
+<h2 id="first">最初の設定</h2>
+
+<h3>接続設定</h3>
+<p>
+パネル上部の「接続設定（URL・ログイン）」を開き、<strong>管理者から教わったバックエンド URL・ユーザー名・パスワード</strong>を入力します。
+一度入力すれば保存され、次回からは畳まれた状態で開きます。
+</p>
+
+<h3>レイヤーの指定</h3>
+<p>
+<strong>「レイヤーを自動検出」ボタンを押すだけ</strong>で、たいていは正しく埋まります。
+</p>
+<div class="tbl-scroll">
+<table>
+  <tr><th>項目</th><th>意味</th></tr>
+  <tr><td>素材レイヤー</td><td>生成した挿絵・実写素材を置くレイヤー</td></tr>
+  <tr><td>セリフを読むレイヤー</td><td>台本として読み取るレイヤー（空 = 全レイヤー、カンマ区切りで複数可）</td></tr>
+</table>
+</div>
+<p>
+番号でもレイヤー名でも指定できます。自動検出を押すと、各レイヤーの中身（セリフ〇件・立ち絵〇件…）付きの候補が
+ドロップダウンに並ぶので、そこから選ぶこともできます。
+</p>
+
+<h2 id="basic">基本の流れ（素材生成）</h2>
+
+<p>
+YMM4 でいつも通り<strong>セリフを並べて保存</strong>（<kbd>Ctrl</kbd>+<kbd>S</kbd>）したら、
+オプションを選んで <strong>「素材生成」</strong> を押すだけです。
+台本の分析 → 各行の絵の内容決め → 画像生成 → タイムラインへの配置まで自動で進みます。
+</p>
+
+<div class="note">
+  <p><strong>既存のアイテムは書き換えません。</strong>
+  生成した素材は指定レイヤーに<strong>追加</strong>されるだけで、あなたが作った立ち絵・字幕・装飾はそのまま残ります。
+  実行前に <code>プロジェクト名.ymmp.bak</code> のバックアップも自動で作られます。</p>
+</div>
+
+<h3>主なオプション</h3>
+
+<h4>動画化する</h4>
+<p>生成した静止画をさらに AI で動かして動画にします。時間はかかりますが動きのある画になります。</p>
+
+<h4>既にある部分はスキップ（空白のみ生成）</h4>
+<p>すでに素材が置いてある行は触らず、<strong>まだ何も無い行だけ</strong>生成します。追加・修正のときに使います。</p>
+
+<h4>実写素材の割合</h4>
+<p>
+指定した割合の行を、AI 画像の代わりに<strong>実写のストック動画</strong>（Pexels / Pixabay）にします。
+風景・物の説明などナレーション寄りの行が対象で、キャラクターが登場する行は AI 画像のままです。
+行より短い素材は自動でループします。0% で無効。
+</p>
+
+<h4>スタイル参照画像</h4>
+<p>1 枚の画像を指定すると、<strong>全ショットの画風</strong>をその絵柄に寄せます。</p>
+
+<h4>角色参照</h4>
+<p>
+登場人物の<strong>見た目を固定</strong>します。「話者から追加」で台本に出てくる話者を一括で並べ、
+それぞれに参照画像を指定してください。その人が登場する行にだけ参照画像が使われます。
+</p>
+<p>
+本文に出てくるだけの人物（喋らない登場人物）は「行を追加」で名前を手入力できます。
+</p>
+
+<h2 id="selected">部分的なやり直し</h2>
+
+<p>
+タイムラインで<strong>アイテムを選んでから</strong>ボタンを押すと、その部分だけ作り直せます。
+</p>
+
+<div class="tbl-scroll">
+<table>
+  <tr><th>ボタン</th><th>選ぶもの</th><th>すること</th></tr>
+  <tr><td>画面再生成</td><td>画像</td><td>その画像を作り直す（スタイル・角色の参照画像も反映されます）</td></tr>
+  <tr><td>画像to動画</td><td>画像</td><td>その画像を動画に変換して差し替える</td></tr>
+  <tr><td>動画再生成</td><td>動画</td><td>元の画像から動画を作り直す</td></tr>
+  <tr><td>未生成補完</td><td>セリフ</td><td>まだ絵が無い行にだけ生成（台本の再分析はしません）</td></tr>
+</table>
+</div>
+
+<div class="note">
+  <p><strong>「動画再生成」はこのプラグインが作った動画だけが対象です。</strong>
+  あなたが自分で入れた動画素材は、選んでも絶対に触りません。</p>
+</div>
+
+<h2 id="effect">画像エフェクト</h2>
+
+<p>
+静止画に<strong>寄り・引き・スライド</strong>のアニメーションを自動で付けます（いわゆる Ken Burns 効果）。
+右のドロップダウンで効果の種類を選べます。
+</p>
+<ul>
+  <li><strong>画像を選んで押す</strong> → その画像だけに付く</li>
+  <li><strong>何も選ばずに押す</strong> → 対象レイヤーの全画像に付く</li>
+</ul>
+
+<div class="note">
+  <p><strong>「対象レイヤー」は入れておくことを強くおすすめします。</strong>
+  空欄のままだと、同じ時刻に置いてある<strong>あなた自身の装飾画像まで動いてしまう</strong>ことがあります。
+  「レイヤーを自動検出」を押せば素材レイヤーが自動で入ります。</p>
+</div>
+
+<p>動画アイテムには付きません（すでに動いているため）。</p>
+
+<h2 id="face">立ち絵の表情を自動設定</h2>
+
+<p>
+各セリフの<strong>感情を AI が判定</strong>して、立ち絵の表情を自動で切り替えます。
+立ち絵のブロックは感情が変わるところで自動的に分割され、位置やサイズはそのまま引き継がれます。
+</p>
+
+<h3>使えるようにするには</h3>
+<p>
+YMM4 の立ち絵で<strong>表情プリセットを保存してあること</strong>が条件です
+（キャラクター編集 → 立ち絵 → 表情を作って保存）。プラグインはその保存済みプリセットを読み取って使います。
+</p>
+
+<div class="note">
+  <p><strong>アニメーション立ち絵のみ対応</strong>です。1 枚絵のシンプル立ち絵には使えません。</p>
+</div>
+
+<h3>手順</h3>
+<ol class="steps">
+  <li>
+    <strong>「表情リストを読み込む」を押す</strong>
+    立ち絵にある表情の名前が一覧で入ります。AI に使ってほしくない表情は削ってください。
+  </li>
+  <li>
+    <strong>強度しきい値を決める</strong>
+    高くするほど<strong>強い感情のときだけ</strong>表情が変わります（＝切り替え頻度が下がる）。
+    弱い行・中立の行はデフォルト表情のままです。
+  </li>
+  <li>
+    <strong>「感情で表情を自動設定（全体）」を押す</strong>
+    台詞を選んでから「選択した台詞だけ表情を設定」を押せば、その部分だけ変えることもできます
+    （言い終わると元の表情に戻り、他の部分には触れません）。
+  </li>
+</ol>
+
+<h3>デフォルト表情について</h3>
+<p>
+感情が無い（淡々とした説明・相槌など）と判定された行は「デフォルト」になります。
+立ち絵に <strong>「デフォルト」という名前の表情プリセットを作っておくと、その顔</strong>が使われます。
+無い場合は、タイムラインに元々置いてあった顔のままになります。どちらの場合も
+前の行の表情が残ってしまうことはありません。
+</p>
+
+<h3>立ち絵の名前とセリフの話者名が違うとき</h3>
+<p>
+通常は名前で自動的に対応します。名前が一致していない場合や、触ってほしくない立ち絵がある場合は、
+「話者の立ち絵レイヤー」に <strong>話者名とレイヤー</strong> を指定してください（「自動検出」で埋まります）。
+</p>
+
+<h2 id="telop">補足テロップの自動配置</h2>
+
+<p>
+各セリフから<strong>強調したいキーワードを AI が抽出</strong>して、専用レイヤーに補足テロップを配置します。
+毎行は出しません（重要な語だけ）。
+</p>
+
+<h3>見た目は「見本」からそのままコピーされます</h3>
+<p>
+好きなテロップを作った .ymmp を <strong>「見本 .ymmp」</strong> に指定してください。
+縁取り・背景の箱・登場アニメーションまで、まるごと複製して使われます。
+</p>
+<ul>
+  <li>スタイル名になるのは、見本のテロップの <strong>Remark（備考）</strong>。無ければテキストの 1 行目</li>
+  <li>見本を指定しない場合は、同梱の既定 3 スタイル（強調／情報／補足）が使われます</li>
+</ul>
+
+<h3>SE（効果音）を付ける</h3>
+<p>
+「テロップに SE を付ける」にチェックを入れると効果音も一緒に配置されます。
+鳴らす音は<strong>見本 .ymmp から取得</strong>します。
+</p>
+<div class="card">
+  <p style="margin-top:0"><strong>やり方</strong>：見本 .ymmp で、テロップと<strong>同じ時刻</strong>に鳴らしたい SE を置いておくだけ。
+  そのスタイル専用の SE として、音量・フェードの設定ごと引き継がれます。</p>
+  <p style="margin-bottom:0">音量を変えたいときは、見本 .ymmp 側で SE の音量を調整してから実行し直してください。</p>
+</div>
+
+<h3>その他</h3>
+<ul>
+  <li><strong>重要度しきい値</strong>：高いほど本当に重要な語だけになります（＝数が減る）。既定 45</li>
+  <li><strong>表示位置</strong>：上下の位置を選べます。字幕と被らない位置は「位置を追加」で自分用に登録できます</li>
+  <li>再実行すると<strong>前回のテロップは作り直し</strong>になります（増え続けません）</li>
+</ul>
+
+<h2 id="faq">困ったとき</h2>
+
+<details>
+  <summary>DLL を置き換えられない / 上書きできない</summary>
+  <p>YMM4 が起動中はファイルがロックされます。<strong>YMM4 を完全に終了してから</strong>置き換えてください。</p>
+</details>
+
+<details>
+  <summary>ツールメニューに出てこない</summary>
+  <ul>
+    <li>置き場所が <code>user\plugin\NarraSync2\</code> になっているか確認してください（フォルダごと置く）</li>
+    <li><code>.dll</code> と <code>.deps.json</code> の<strong>両方</strong>が必要です</li>
+    <li>YMM4 のバージョンが 4.53 か確認してください</li>
+  </ul>
+</details>
+
+<details>
+  <summary>表情の詳細を見ると「カスタム」と表示される</summary>
+  <p>
+  <strong>問題ありません。</strong>絵は正しく設定されています。
+  YMM4 は表情の名前をプロジェクトに保存せず、パーツの画像そのものを保存する仕組みで、
+  画面の表示名は「今の組み合わせがどの登録済み表情と一致するか」を照合して出しています。
+  立ち絵の登録名と台本の話者名がずれていたり、プリセットに含まれないパーツが混ざっていると
+  照合できず「カスタム」と出ますが、<strong>書き出される映像には影響しません</strong>。
+  </p>
+</details>
+
+<details>
+  <summary>表情が変わらない / 「表情を設定できませんでした」と出る</summary>
+  <ul>
+    <li>立ち絵が<strong>シンプル立ち絵（1 枚絵）</strong>だと未対応です。アニメーション立ち絵が必要です</li>
+    <li>立ち絵に<strong>表情プリセットが保存されていない</strong>可能性があります</li>
+    <li>表情リストの名前が、立ち絵に登録した表情名と<strong>1 文字でも違う</strong>と対象外になります（「表情リストを読み込む」で入れるのが確実）</li>
+    <li>強度しきい値が高すぎて、全部デフォルト判定になっていないか確認してください</li>
+  </ul>
+</details>
+
+<details>
+  <summary>画像エフェクトで、動かしたくない画像まで動いた</summary>
+  <p>
+  「対象レイヤー」を指定してから実行してください。空欄のままだと、同じ時刻に置かれた
+  他のレイヤーの画像も対象になります。「レイヤーを自動検出」で素材レイヤーが自動で入ります。
+  </p>
+</details>
+
+<details>
+  <summary>再生成したらキャラクターの見た目が変わってしまった</summary>
+  <p>
+  「画面再生成」でも角色参照・スタイル参照は反映されます。パネルの<strong>角色参照に画像が設定されているか</strong>確認してください
+  （空欄のままだと参照なしで作り直されます）。
+  </p>
+  <p>
+  なお古い版のプラグインには、再生成時だけ参照画像が使われない不具合がありました。
+  最新版に更新してください。
+  </p>
+</details>
+
+<details>
+  <summary>失敗した / 変になったので元に戻したい</summary>
+  <p>
+  実行前のプロジェクトが <code>プロジェクト名.ymmp.bak</code> として同じフォルダに保存されています。
+  拡張子の <code>.bak</code> を消せば元のプロジェクトに戻せます。
+  </p>
+</details>
+
+<details>
+  <summary>「まずプロジェクトを保存してください」と出る</summary>
+  <p>一度も保存していない新規プロジェクトでは実行できません。<kbd>Ctrl</kbd>+<kbd>S</kbd> で保存してから実行してください。</p>
+</details>
+
+<footer>
+  NarraSync2 YMM4 Plugin
+</footer>
+
+</div>
+</body>
+</html>
